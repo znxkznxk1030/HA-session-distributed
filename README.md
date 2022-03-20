@@ -2,13 +2,13 @@
 
 to know how to distribute session in HA environment.
 
-## 고가용성 구성에서 세션을 유지시키는 방법
+## AWS에서 고가용성 구성에서 세션을 유지시키는 방법
 
-1. 로드밸런서의 sticky session 옵션 사용하기
-2. dynamodb에 세션 저장하기
-3. elastic cache for redis에 세션 저장하기
+1. 로드밸런서의 sticky session 옵션 사용
+2. dynamodb에 세션 저장
+3. elastic cache for redis에 세션 저장
 
-## Spring-Boot로 Session 사용하기
+## Spring-Boot에서 Session 사용하기
 
 ### 세션으로 이용할 UserInfo
 
@@ -68,9 +68,24 @@ public class SessionController {
 
 ![spring-session-03](./figures/spring-session-03.png)
 
-#### 4. 다른 세션에서는 UserInfo가 저장되지 않은 것 확인하기.
+#### 4. 다른 세션에서는 UserInfo가 저장되지 않은 것 확인하기
 
 ![spring-session-04](./figures/spring-session-04.png)
+
+## AWS에서 고가용성 환경 만들기
+
+[실습 4 – 고가용성 환경 생성](https://github.com/znxkznxk1030/aws-t2/tree/main/ArchitectOnAWS/training4)
+
+![고가용성 환경](./figures/lb00.png)
+
+- 로드밸런서가 두개의 가용영역에 걸쳐 있는 App Server에 트래픽을 분산시켜 보내주게 된다.
+
+### 고가용성 환경에서 세션 유지 문제점
+
+![HA Session Problem](./figures/ha-session-problem.png)
+
+- 1번째 요청에서 App Server 1과의 세션이 체결되었다.
+- 로드밸런서의 트래픽이 두번째 요청을 App Server 2로 보내게 된다면, 1번째 요청에서 체결한 세션을 찾을 수 없는 문제점이 생기게 된다.
 
 ## Reference
 
