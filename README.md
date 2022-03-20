@@ -1,2 +1,78 @@
-# HA-session-distributed
+# Distributed Session On HA Environment With AWS
+
 to know how to distribute session in HA environment.
+
+## 고가용성 구성에서 세션을 유지시키는 방법
+
+1. 로드밸런서의 sticky session 옵션 사용하기
+2. dynamodb에 세션 저장하기
+3. elastic cache for redis에 세션 저장하기
+
+## Spring-Boot로 Session 사용하기
+
+### 세션으로 이용할 UserInfo
+
+```java
+@Component
+@Scope(value = WebApplicationContext.SCOPE_SESSION, proxyMode = ScopedProxyMode.TARGET_CLASS)
+@Getter
+@Setter
+@ToString
+public class UserInfo implements Serializable {
+  private static final long serialVersionUID = 1L;
+
+  private String userId;
+  private String userNm;
+}
+```
+
+- \@Scope: Bean을 Session Scope에서 생명주기를 갖도록 하고, CGLIB를 이용해서 인테페이스 없이 클래스만으로도 빈을 동적 생산하도록 한다.
+- [스프링 부트 - 동적 프록시 기술(CGLIB, ProxyFactory)](https://velog.io/@gmtmoney2357/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%B6%80%ED%8A%B8-%EB%8F%99%EC%A0%81-%ED%94%84%EB%A1%9D%EC%8B%9C-%EA%B8%B0%EC%88%A0CGLIB-ProxyFactory)
+
+### 테스트를 위한 간단한 컨트롤러
+
+```java
+@RestController
+public class SessionController {
+
+  @Resource
+  private UserInfo userInfo;
+
+  @PostMapping(value = "login", consumes = "application/json", produces = "application/json")
+  public String login(@RequestBody UserDoc body) {
+
+    userInfo.setUserId(body.getUserId());
+    userInfo.setUserNm(body.getUserNm());
+    return userInfo.toString();
+  }
+
+  @GetMapping(value = "session", produces = "application/json")
+  public String get() {
+    return userInfo.toString();
+  }
+
+}
+```
+
+### Postman을 이용한 테스트
+
+#### 1. 세션을 저장하도록 POST 요청
+
+![spring-session-01](./figures/spring-session-01.png)
+
+#### 2. 해당 세션에 UserInfo가 저장되어있는지 확인
+
+![spring-session-02](./figures/spring-session-02.png)
+
+#### 3. JSESSIONID를 강제로 변환시키기 ( 세션 바꾸기 )
+
+![spring-session-03](./figures/spring-session-03.png)
+
+#### 4. 다른 세션에서는 UserInfo가 저장되지 않은 것 확인하기.
+
+![spring-session-04](./figures/spring-session-04.png)
+
+## Reference
+
+- [Spring Boot Session 사용하기 (Bean Scope)](https://gofnrk.tistory.com/42)
+- [스프링 부트 - 동적 프록시 기술(CGLIB, ProxyFactory)](https://velog.io/@gmtmoney2357/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%B6%80%ED%8A%B8-%EB%8F%99%EC%A0%81-%ED%94%84%EB%A1%9D%EC%8B%9C-%EA%B8%B0%EC%88%A0CGLIB-ProxyFactory)
