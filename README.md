@@ -85,6 +85,29 @@ public class SessionController {
 
 - 로드밸런서가 두개의 가용영역에 걸쳐 있는 App Server에 트래픽을 분산시켜 보내주게 된다.
 
+```bash
+# Docker Install
+sudo yum update
+
+sudo yum install apt-transport-https
+sudo yum install ca-certificates
+sudo yum install curl
+sudo yum install software-properties-common
+
+sudo yum search docker
+sudo yum info docker
+sudo yum --disablerepo=docker-ce-stable install docker
+sudo systemctl enable docker.service
+yes
+sudo systemctl start docker.service
+
+# Docker Pull
+sudo docker pull znxkznxk1030/spring-simple-session:0.0.1
+
+# Docker Run
+sudo docker run -d -p 80:8080 znxkznxk1030/spring-simple-session:0.0.1
+```
+
 ### 고가용성 환경에서 세션 유지 문제점
 
 ![HA Session Problem](./figures/ha-session-problem.png)
@@ -96,3 +119,5 @@ public class SessionController {
 
 - [Spring Boot Session 사용하기 (Bean Scope)](https://gofnrk.tistory.com/42)
 - [스프링 부트 - 동적 프록시 기술(CGLIB, ProxyFactory)](https://velog.io/@gmtmoney2357/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%B6%80%ED%8A%B8-%EB%8F%99%EC%A0%81-%ED%94%84%EB%A1%9D%EC%8B%9C-%EA%B8%B0%EC%88%A0CGLIB-ProxyFactory)
+
+ssh -i hjys.pem ec2-user@ec2-13-209-91-0.ap-northeast-2.compute.amazonaws.com
