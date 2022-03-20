@@ -10,6 +10,11 @@ to know how to distribute session in HA environment.
 
 ## Spring-Boot에서 Session 사용하기
 
+### 도커 이미지
+
+- tag: znxkznxk1030/spring-simple-session
+- [DockerHub](https://hub.docker.com/repository/docker/znxkznxk1030/spring-simple-session)
+
 ### 세션으로 이용할 UserInfo
 
 ```java
