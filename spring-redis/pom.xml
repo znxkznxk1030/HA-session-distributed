@@ -8,10 +8,10 @@
 		<version>2.6.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>arthur.kim</groupId>
-	<artifactId>documentdb-session</artifactId>
+	<groupId>arthur-kim</groupId>
+	<artifactId>spring-redis</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>documentdb-session</name>
+	<name>spring-redis</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
 		<java.version>11</java.version>
@@ -19,43 +19,19 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-mongodb</artifactId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.session</groupId>
-			<artifactId>spring-session-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.session</groupId>
-			<artifactId>spring-session-data-mongodb</artifactId>
-		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>mongo-java-driver</artifactId>
-			<version>3.12.10</version>
-		</dependency>
-		<dependency>
-			<groupId>de.flapdoodle.embed</groupId>
-			<artifactId>de.flapdoodle.embed.mongo</artifactId>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
-
-	<repositories>
-		<repository>
-			<id>spring-snapshot</id>
-			<url>https://repo.spring.io/libs-snapshot</url>
-		</repository>
-	</repositories>
 
 	<build>
 		<plugins>

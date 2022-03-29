@@ -154,9 +154,39 @@ sudo docker run -d -p 80:8080 znxkznxk1030/spring-simple-session:0.0.1
 1. 다른 세션에서는 UserInfo가 저장되지 않은 것 확인하기
    ![spring-session-04](./figures/spring-session-04.png)
 
+### Redis와 Cookie
+
+[redis book](https://redis.com/ebook/part-1-getting-started/chapter-2-anatomy-of-a-redis-web-application/2-1-login-and-cookie-caching/)
+
+### Redis Install & Start ( Mac OS)
+
+```bash
+brew install redis
+
+brew services start redis
+brew services stop redis
+brew services restart redis
+
+redis-cli
+```
+
+### Redis Config Password
+
+```bash
+redis 127.0.0.1:6379> AUTH PASSWORD
+(error) ERR Client sent AUTH, but no password is set
+redis 127.0.0.1:6379> CONFIG SET requirepass "mypass"
+OK
+redis 127.0.0.1:6379> AUTH mypass
+Ok
+```
+
 ## Reference
 
 - [Spring Boot Session 사용하기 (Bean Scope)](https://gofnrk.tistory.com/42)
 - [스프링 부트 - 동적 프록시 기술(CGLIB, ProxyFactory)](https://velog.io/@gmtmoney2357/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%B6%80%ED%8A%B8-%EB%8F%99%EC%A0%81-%ED%94%84%EB%A1%9D%EC%8B%9C-%EA%B8%B0%EC%88%A0CGLIB-ProxyFactory)
+- [Springboot + Redis 연동하는 예제](https://oingdaddy.tistory.com/310)
+- [How to set password for Redis?](https://stackoverflow.com/questions/7537905/how-to-set-password-for-redis)
 
-ssh -i hjys.pem ec2-3-34-34-192.ap-northeast-2.compute.amazonaws.com
+
+  ssh -i hjys.pem ec2-3-34-34-192.ap-northeast-2.compute.amazonaws.com
