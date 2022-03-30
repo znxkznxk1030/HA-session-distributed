@@ -64,6 +64,42 @@
 
 ## 부록
 
+### DockerHub 이미지 빌드
+
+#### 1. Dockerfile 만들기
+
+```Dockerfile
+FROM openjdk:12.0.2
+
+EXPOSE 8080
+
+ADD ./target/*.jar app.jar
+
+ENTRYPOINT ["java","-jar","/app.jar"]
+```
+
+#### 2. \.jar 파일로 만들기
+
+```bash
+mvn clean
+mvn package -Dmaven.test.skip
+```
+
+#### 3. docker image 빌드
+
+```bash
+docker build -t redis-session-spring .
+```
+
+#### 4. docker image push
+
+```bash
+docker login # docker hub에 로그인
+
+docker tag redis-session-spring:0.0.2 znxkznxk1030/redis-session-spring:0.0.2
+docker push znxkznxk1030/redis-session-spring:0.0.2
+```
+
 ### 테스트용 도커 이미지
 
 - tag: znxkznxk1030/spring-simple-session:0.0.1
@@ -187,6 +223,5 @@ Ok
 - [스프링 부트 - 동적 프록시 기술(CGLIB, ProxyFactory)](https://velog.io/@gmtmoney2357/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%B6%80%ED%8A%B8-%EB%8F%99%EC%A0%81-%ED%94%84%EB%A1%9D%EC%8B%9C-%EA%B8%B0%EC%88%A0CGLIB-ProxyFactory)
 - [Springboot + Redis 연동하는 예제](https://oingdaddy.tistory.com/310)
 - [How to set password for Redis?](https://stackoverflow.com/questions/7537905/how-to-set-password-for-redis)
-
 
   ssh -i hjys.pem ec2-3-34-34-192.ap-northeast-2.compute.amazonaws.com
