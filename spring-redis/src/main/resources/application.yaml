@@ -1,6 +1,6 @@
 spring:
   redis:
-    host: localhost
+    host: redissession.yoo9vn.ng.0001.apn2.cache.amazonaws.com
     port: 6379
     #    password: mypass
     pool:
@@ -8,3 +8,4 @@ spring:
       min-idle: 0
       max-active: 8
       max-wait: -1
+      
