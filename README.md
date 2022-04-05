@@ -1,11 +1,56 @@
-# Session Fixation On HA Environment With AWS
+# How to Persist Sessions in a High Availability Environment on AWS
 
-3 Ways Of Session Fixation On AWS HA Environment
+3 Ways Of Persisting Sessions On AWS HA Environment
 
-## AWS에서 고가용성 구성에서 세션을 고정시키는 법
+- [How to Persist Sessions in a High Availability Environment on AWS](#how-to-persist-sessions-in-a-high-availability-environment-on-aws)
+  - [AWS에서 고가용성 구성에서 세션을 유지히니는법](#aws에서-고가용성-구성에서-세션을-유지히니는법)
+  - [고가용성 환경에서 세션 유지 문제점](#고가용성-환경에서-세션-유지-문제점)
+    - [Postman으로 테스트](#postman으로-테스트)
+  - [1. Sticky Session](#1-sticky-session)
+    - [EC2 > 로드 밸런싱 > 대상그룹](#ec2--로드-밸런싱--대상그룹)
+    - [대상그룹의 속성확인](#대상그룹의-속성확인)
+    - [Stickiness 사용](#stickiness-사용)
+    - [Sticky Session | 결과](#sticky-session--결과)
+    - [Sticky Session | 장점](#sticky-session--장점)
+      - [가장 쉬운 적용방법](#가장-쉬운-적용방법)
+      - [높은 적용성](#높은-적용성)
+    - [Sticky Session | 단점](#sticky-session--단점)
+      - [로드밸런서의 성능 저하](#로드밸런서의-성능-저하)
+      - [재해발생 시 복구 불가능](#재해발생-시-복구-불가능)
+  - [2. DocumentDB](#2-documentdb)
+    - [DocumentDB 생성](#documentdb-생성)
+    - [pom.xml에 Spring Session 의존성 주입](#pomxml에-spring-session-의존성-주입)
+    - [Spring Boot에 DocumentDB 연동](#spring-boot에-documentdb-연동)
+    - [DocumentDB | 장점](#documentdb--장점)
+      - [영속성](#영속성)
+      - [NoSql의 장점](#nosql의-장점)
+    - [DocumentDB | 단점](#documentdb--단점)
+      - [I/O 성능](#io-성능)
+      - [MongoDB와 호환성](#mongodb와-호환성)
+  - [3. ElastiCache For Redis](#3-elasticache-for-redis)
+    - [ElastiCache For Redis | 장점](#elasticache-for-redis--장점)
+    - [ElastiCache For Redis | 단점](#elasticache-for-redis--단점)
+  - [부록](#부록)
+    - [DockerHub 이미지 빌드](#dockerhub-이미지-빌드)
+      - [1. Dockerfile 만들기](#1-dockerfile-만들기)
+      - [2. \.jar 파일로 만들기](#2-jar-파일로-만들기)
+      - [3. docker image 빌드](#3-docker-image-빌드)
+      - [4. docker image push](#4-docker-image-push)
+    - [Postman을 이용한 세션 테스트](#postman을-이용한-세션-테스트)
+    - [테스트용 도커 이미지](#테스트용-도커-이미지)
+    - [세션으로 이용할 UserInfo](#세션으로-이용할-userinfo)
+    - [테스트를 위한 간단한 컨트롤러](#테스트를-위한-간단한-컨트롤러)
+    - [AWS에서 고가용성 환경 만들기](#aws에서-고가용성-환경-만들기)
+    - [시작 탬플릿](#시작-탬플릿)
+    - [Redis와 Cookie](#redis와-cookie)
+    - [Redis Install & Start ( Mac OS)](#redis-install--start--mac-os)
+    - [Redis Config Password](#redis-config-password)
+  - [Reference](#reference)
+
+## AWS에서 고가용성 구성에서 세션을 유지히니는법
 
 1. 로드밸런서의 sticky session 옵션 사용하여 체결된 App Server와만 연결을 유도한다.
-2. DynamoDb에 세션정보를 저장하여 세션을 영구적으로 남긴다.
+2. DocumentDB에 세션정보를 저장하여 세션을 영구적으로 남긴다.
 3. ElastiCache for redis를 이용하여 세션 정보를 캐싱하여 사용한다.
 
 ## 고가용성 환경에서 세션 유지 문제점
@@ -50,7 +95,17 @@
 - 세션 정보를 업데이트 하고
 - GET 으로 세션정보를 가져올 때 항상 세션정보를 잘 가져옴을 알 수 있다.
 
-### Sticky Session | 문제점
+### Sticky Session | 장점
+
+#### 가장 쉬운 적용방법
+
+- 콘솔에서 적용하는 것 이외의 별다른 조치를 취하지 않더라도 즉시 적용가능하다.
+
+#### 높은 적용성
+
+- 해당 인스턴스가 인스턴스 내부 메모리 ( 인스턴스 스토어 ) 를 이용해서 프로세스를 처리하는 중에 있는 등의 비이상적인 여러 상황속에서도 적용가능하다.
+
+### Sticky Session | 단점
 
 #### 로드밸런서의 성능 저하
 
@@ -61,6 +116,84 @@
 
 - 세션은 Default 구성으로 인스턴스내의 파일에 세션이 저장된다.
 - 즉, App Server 1의 서비스가 중단 될 경우, App Server 1과 체결된 세션은 모두 강제로 종료되는 상황이 벌어지게 된다.
+
+## 2. DocumentDB
+
+![docu session](./figures/docu-session.png)
+
+- [Spring Session MongoDB](https://spring.io/projects/spring-session-data-mongodb) ( AWS의 DocumentDB는 MongoDB와 호환된다. )를 이용하여 NoSql DB를 세션저장소로 이용할 수 있다.
+
+### DocumentDB 생성
+
+![docudb-001](./figures/documentdb/docudb-001.png)
+
+- DocumentDB의 파티션키는 검색속도와 연관 됨으로, 고유한 값으로 지정한다.
+
+### pom.xml에 Spring Session 의존성 주입
+
+```xml
+<dependency>
+  <groupId>org.springframework.session</groupId>
+  <artifactId>spring-session-core</artifactId>
+</dependency>
+<dependency>
+  <groupId>org.springframework.session</groupId>
+  <artifactId>spring-session-data-mongodb</artifactId>
+</dependency>
+```
+
+### Spring Boot에 DocumentDB 연동
+
+- application.properties
+
+```properties
+spring.data.mongodb.host={{ Your DocumentDB DNS URL }}
+spring.data.mongodb.port=27017
+spring.data.mongodb.database=prod
+```
+
+- HttpSessionConfig.java
+
+```java
+@EnableMongoHttpSession
+public class HttpSessionConfig {
+    @Bean
+    public JdkMongoSessionConverter jdkMongoSessionConverter() {
+        return new JdkMongoSessionConverter(Duration.ofMinutes(30));
+    }
+}
+```
+
+### DocumentDB | 장점
+
+#### 영속성
+
+- 한번 저장한 세션은 DB에 영원히 저장되어 향후 세션을 이용한 분석 등을 하기에 적합하다.
+
+#### NoSql의 장점
+
+- Spring Session에서는 관계형 데이터 베이스도 지원하지만,
+- 그에 비해 DocumentDB를 이용하게 되면 스키마를 자유롭게 확장 시킬수 있고, 용량은 수평 확장이 가능하다
+
+### DocumentDB | 단점
+
+#### I/O 성능
+
+- 메모리가 아닌 디스크를 이용하기 때문에 세션을 읽고 쓰는데 드는 시간이 높다.
+
+#### MongoDB와 호환성
+
+- 기본적으로 DocumentDB는 MongoDB를 호환하지만, 최신 버전을 지원하지 않는다.
+- 3.6 및 4.0 API 과 호환 ( 현재 MongoDB의 최신 버전은 5버전 이상이다. )
+- 추가적으로 DocumentDB보다 더 높은 성능의 DynamoDB도 지원하지만, DynamoDB는 Spring Session 과의 호환이 되지 않는다.
+
+## 3. ElastiCache For Redis
+
+![redis session](./figures/redis-session.png)
+
+### ElastiCache For Redis | 장점
+
+### ElastiCache For Redis | 단점
 
 ## 부록
 
@@ -96,9 +229,20 @@ docker build -t redis-session-spring .
 ```bash
 docker login # docker hub에 로그인
 
-docker tag redis-session-spring:0.0.2 znxkznxk1030/redis-session-spring:0.0.2
-docker push znxkznxk1030/redis-session-spring:0.0.2
+docker tag redis-session-spring:latest znxkznxk1030/redis-session-spring:lastest
+docker push znxkznxk1030/redis-session-spring:lastest
 ```
+
+### Postman을 이용한 세션 테스트
+
+1. 세션을 저장하도록 POST 요청
+   ![spring-session-01](./figures/spring-session-01.png)
+1. 해당 세션에 UserInfo가 저장되어있는지 확인
+   ![spring-session-02](./figures/spring-session-02.png)
+1. JSESSIONID를 강제로 변환시키기 ( 세션 바꾸기 )
+   ![spring-session-03](./figures/spring-session-03.png)
+1. 다른 세션에서는 UserInfo가 저장되지 않은 것 확인하기
+   ![spring-session-04](./figures/spring-session-04.png)
 
 ### 테스트용 도커 이미지
 
@@ -179,17 +323,6 @@ sudo docker pull znxkznxk1030/spring-simple-session:0.0.1
 sudo docker run -d -p 80:8080 znxkznxk1030/spring-simple-session:0.0.1
 ```
 
-### Postman을 이용한 세션 테스트
-
-1. 세션을 저장하도록 POST 요청
-   ![spring-session-01](./figures/spring-session-01.png)
-1. 해당 세션에 UserInfo가 저장되어있는지 확인
-   ![spring-session-02](./figures/spring-session-02.png)
-1. JSESSIONID를 강제로 변환시키기 ( 세션 바꾸기 )
-   ![spring-session-03](./figures/spring-session-03.png)
-1. 다른 세션에서는 UserInfo가 저장되지 않은 것 확인하기
-   ![spring-session-04](./figures/spring-session-04.png)
-
 ### Redis와 Cookie
 
 [redis book](https://redis.com/ebook/part-1-getting-started/chapter-2-anatomy-of-a-redis-web-application/2-1-login-and-cookie-caching/)
@@ -221,7 +354,6 @@ Ok
 
 - [Spring Boot Session 사용하기 (Bean Scope)](https://gofnrk.tistory.com/42)
 - [스프링 부트 - 동적 프록시 기술(CGLIB, ProxyFactory)](https://velog.io/@gmtmoney2357/%EC%8A%A4%ED%94%84%EB%A7%81-%EB%B6%80%ED%8A%B8-%EB%8F%99%EC%A0%81-%ED%94%84%EB%A1%9D%EC%8B%9C-%EA%B8%B0%EC%88%A0CGLIB-ProxyFactory)
+- [Spring Session MongoDB](https://spring.io/projects/spring-session-data-mongodb)
 - [Springboot + Redis 연동하는 예제](https://oingdaddy.tistory.com/310)
 - [How to set password for Redis?](https://stackoverflow.com/questions/7537905/how-to-set-password-for-redis)
-
-  ssh -i hjys.pem ec2-3-34-34-192.ap-northeast-2.compute.amazonaws.com
