@@ -9,7 +9,7 @@
   - [1. Sticky Session](#1-sticky-session)
     - [EC2 > 로드 밸런싱 > 대상그룹](#ec2--로드-밸런싱--대상그룹)
     - [대상그룹의 속성확인](#대상그룹의-속성확인)
-    - [Stickiness 사용](#stickiness-사용)
+    - [Stickiness 사용 ( EC2 > 로드 밸런싱 > 대상그룹 )](#stickiness-사용--ec2--로드-밸런싱--대상그룹-)
     - [Sticky Session | 결과](#sticky-session--결과)
     - [Sticky Session | 장점](#sticky-session--장점)
       - [가장 쉬운 적용방법](#가장-쉬운-적용방법)
@@ -77,14 +77,14 @@
 
 ### EC2 > 로드 밸런싱 > 대상그룹
 
-![sticky-session-001](./figures/sticky-session-001.png)
+<!-- ![sticky-session-001](./figures/sticky-session-001.png) -->
 
 ### 대상그룹의 속성확인
 
-![sticky-session-002](./figures/sticky-session-002.png)
-![sticky-session-003](./figures/sticky-session-003.png)
+<!-- ![sticky-session-002](./figures/sticky-session-002.png)
+![sticky-session-003](./figures/sticky-session-003.png) -->
 
-### Stickiness 사용
+### Stickiness 사용 ( EC2 > 로드 밸런싱 > 대상그룹 )
 
 ![sticky-session-004](./figures/sticky-session-004.png)
 
