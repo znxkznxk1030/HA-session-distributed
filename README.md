@@ -35,12 +35,12 @@
       - [application.yaml](#applicationyaml)
       - [RedisSessionConfig.java](#redissessionconfigjava)
         - [Spring Session using Lettuce connecting to AWS ElastiCache Redis](#spring-session-using-lettuce-connecting-to-aws-elasticache-redis)
+    - [ElastiCache For Redis | 결과](#elasticache-for-redis--결과)
     - [ElastiCache For Redis | 장점](#elasticache-for-redis--장점)
       - [NoSql Database로서의 장점](#nosql-database로서의-장점)
       - [In-Memory 기반의 높은 I/O 성능](#in-memory-기반의-높은-io-성능)
       - [비용](#비용)
         - [요금 비교 ( 서울 리전 | 온디멘드 | t3.medium )](#요금-비교--서울-리전--온디멘드--t3medium-)
-    - [정상적으로 세션이 유지되는 것 확인하기.](#정상적으로-세션이-유지되는-것-확인하기)
     - [ElastiCache For Redis | 단점](#elasticache-for-redis--단점)
       - [장애시 복구 불가능](#장애시-복구-불가능)
       - [Redis와의 호환성](#redis와의-호환성)
@@ -306,6 +306,10 @@ public class RedisSessionConfig {
 }
 ```
 
+### ElastiCache For Redis | 결과
+
+![elastic-redis-session](./figures/elastic-redis-session.gif)
+
 ### ElastiCache For Redis | 장점
 
 #### NoSql Database로서의 장점
@@ -328,10 +332,6 @@ public class RedisSessionConfig {
 | Elasticache For Redis | cache.t3.medium |  0.099 USD  |
 |     RDS for MySql     |  db.t3.medium   |  0.104 USD  |
 |      DocumentDB       |  db.t3.medium   |  0.119 USD  |
-
-### 정상적으로 세션이 유지되는 것 확인하기.
-
-![elastic-redis-session](./figures/elastic-redis-session.gif)
 
 ### ElastiCache For Redis | 단점
 
