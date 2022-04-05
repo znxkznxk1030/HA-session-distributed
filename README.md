@@ -3,12 +3,10 @@
 3 Ways Of Persisting Sessions On AWS HA Environment
 
 - [How to Persist Sessions in a High Availability Environment on AWS](#how-to-persist-sessions-in-a-high-availability-environment-on-aws)
-  - [AWS에서 고가용성 구성에서 세션을 유지히니는법](#aws에서-고가용성-구성에서-세션을-유지히니는법)
-  - [고가용성 환경에서 세션 유지 문제점](#고가용성-환경에서-세션-유지-문제점)
-    - [Postman으로 테스트](#postman으로-테스트)
+  - [AWS에서 고가용성 구성에서 세션을 유지하는법](#aws에서-고가용성-구성에서-세션을-유지하는법)
+    - [고가용성 환경에서 세션 유지 문제점](#고가용성-환경에서-세션-유지-문제점)
+    - [유지되지 않는 세션 테스트](#유지되지-않는-세션-테스트)
   - [1. Sticky Session](#1-sticky-session)
-    - [EC2 > 로드 밸런싱 > 대상그룹](#ec2--로드-밸런싱--대상그룹)
-    - [대상그룹의 속성확인](#대상그룹의-속성확인)
     - [Stickiness 사용 ( EC2 > 로드 밸런싱 > 대상그룹 )](#stickiness-사용--ec2--로드-밸런싱--대상그룹-)
     - [Sticky Session | 결과](#sticky-session--결과)
     - [Sticky Session | 장점](#sticky-session--장점)
@@ -28,8 +26,25 @@
       - [I/O 성능](#io-성능)
       - [MongoDB와 호환성](#mongodb와-호환성)
   - [3. ElastiCache For Redis](#3-elasticache-for-redis)
+    - [AWS | Elasticache for redis 생성하기](#aws--elasticache-for-redis-생성하기)
+      - [ElastiCache > Redis > 생성](#elasticache--redis--생성)
+      - [VPC와 서브넷 설정](#vpc와-서브넷-설정)
+      - [정상 생성 확인하기](#정상-생성-확인하기)
+    - [Spring Session에서 Redis 설정하기](#spring-session에서-redis-설정하기)
+      - [pom.xml](#pomxml)
+      - [application.yaml](#applicationyaml)
+      - [RedisSessionConfig.java](#redissessionconfigjava)
+        - [Spring Session using Lettuce connecting to AWS ElastiCache Redis](#spring-session-using-lettuce-connecting-to-aws-elasticache-redis)
     - [ElastiCache For Redis | 장점](#elasticache-for-redis--장점)
+      - [NoSql Database로서의 장점](#nosql-database로서의-장점)
+      - [In-Memory 기반의 높은 I/O 성능](#in-memory-기반의-높은-io-성능)
+      - [비용](#비용)
+        - [요금 비교 ( 서울 리전 | 온디멘드 | t3.medium )](#요금-비교--서울-리전--온디멘드--t3medium-)
+    - [정상적으로 세션이 유지되는 것 확인하기.](#정상적으로-세션이-유지되는-것-확인하기)
     - [ElastiCache For Redis | 단점](#elasticache-for-redis--단점)
+      - [장애시 복구 불가능](#장애시-복구-불가능)
+      - [Redis와의 호환성](#redis와의-호환성)
+      - [비영속성](#비영속성)
   - [부록](#부록)
     - [DockerHub 이미지 빌드](#dockerhub-이미지-빌드)
       - [1. Dockerfile 만들기](#1-dockerfile-만들기)
@@ -47,20 +62,22 @@
     - [Redis Config Password](#redis-config-password)
   - [Reference](#reference)
 
-## AWS에서 고가용성 구성에서 세션을 유지히니는법
+## AWS에서 고가용성 구성에서 세션을 유지하는법
 
-1. 로드밸런서의 sticky session 옵션 사용하여 체결된 App Server와만 연결을 유도한다.
+1. sticky session 옵션을 사용하여 체결된 App Server와만 연결을 유도한다.
 2. DocumentDB에 세션정보를 저장하여 세션을 영구적으로 남긴다.
 3. ElastiCache for redis를 이용하여 세션 정보를 캐싱하여 사용한다.
 
-## 고가용성 환경에서 세션 유지 문제점
+### 고가용성 환경에서 세션 유지 문제점
 
 ![HA Session Problem](./figures/ha-session-problem.png)
 
 - 1번째 요청에서 App Server 1과의 세션이 체결되었다.
 - 로드밸런서의 트래픽이 두번째 요청을 App Server 2로 보내게 된다면, 1번째 요청에서 체결한 세션을 찾을 수 없는 문제점이 생기게 된다.
 
-### Postman으로 테스트
+### 유지되지 않는 세션 테스트
+
+- [고가용성 환경](#aws에서-고가용성-환경-만들기) 으로 App Server1, 2를 구성하였습니다.
 
 ![session cache failed](./figures/session-cache-failed.gif)
 
@@ -72,14 +89,16 @@
 
 ## 1. Sticky Session
 
+- **전체 소스는 spring-simple-session 폴더에 있습니다.**
+
 - 로드밸런서의 Sticky Session 옵션을 설정하는 방법은
 - 로드밸런서가 관리하는 대상그룹에서 설정할 수 있다.
 
-### EC2 > 로드 밸런싱 > 대상그룹
+<!-- ### EC2 > 로드 밸런싱 > 대상그룹 -->
 
 <!-- ![sticky-session-001](./figures/sticky-session-001.png) -->
 
-### 대상그룹의 속성확인
+<!-- ### 대상그룹의 속성확인 -->
 
 <!-- ![sticky-session-002](./figures/sticky-session-002.png)
 ![sticky-session-003](./figures/sticky-session-003.png) -->
@@ -191,9 +210,143 @@ public class HttpSessionConfig {
 
 ![redis session](./figures/redis-session.png)
 
+### AWS | Elasticache for redis 생성하기
+
+#### ElastiCache > Redis > 생성
+
+![redis-005](./figures/redis/redis-005.png)
+![redis-006](./figures/redis/redis-006.png)
+![redis-007](./figures/redis/redis-007.png)
+
+#### VPC와 서브넷 설정
+
+![redis-009](./figures/redis/redis-009.png)
+![redis-010](./figures/redis/redis-011.png)
+![redis-011](./figures/redis/redis-012.png)
+
+- App Server 1,2가있는 VPC내에서 프라이빗 서브넷 2개 ( 2곳의 다른 가용영역 )에 배치하여 클러스터 구성
+
+#### 정상 생성 확인하기
+
+![redis-014](./figures/redis/redis-014.png)
+
+- 기본엔드포인트가 Spring Boot에서 사용할 Redis의 엔드포인트가 된다.
+
+### Spring Session에서 Redis 설정하기
+
+- **전체 소스는 spring-redis 폴더에 있습니다.**
+
+#### pom.xml
+
+- spring-boot-starter-data-redis, spring-session-data-redis 의존성 추가
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.session</groupId>
+    <artifactId>spring-session-data-redis</artifactId>
+</dependency>
+```
+
+#### application.yaml
+
+```yml
+spring:
+  redis:
+    host: << Your Redis Server >>
+    port: 6379
+    #    password: mypass
+    pool:
+      max-idle: 8
+      min-idle: 0
+      max-active: 8
+      max-wait: -1
+```
+
+#### RedisSessionConfig.java
+
+- host,port의 기본 값은 각각 localhost, 6373 이다.
+- Elasticache 에서 Redis를 올릴때 ConfigureRedisAction에서 문제가 있어서 옵션 없음으로 선택한다 ( NO_OP )
+
+##### [Spring Session using Lettuce connecting to AWS ElastiCache Redis](https://stackoverflow.com/questions/62761730/spring-session-using-lettuce-connecting-to-aws-elasticache-redis)
+
+![Spring Session using Lettuce connecting to AWS ElastiCache Redis](./figures/redis/redis-015.png)
+
+```java
+@EnableRedisHttpSession
+public class RedisSessionConfig {
+
+    @Value("${spring.redis.host}")
+    private String redisHost;
+
+    @Value("${spring.redis.port}")
+    private int redisPort;
+
+    @Bean
+    public LettuceConnectionFactory connectionFactory() {
+        return new LettuceConnectionFactory(redisHost, redisPort);
+    }
+
+    @Bean
+    public ConfigureRedisAction configureRedisAction() {
+        return ConfigureRedisAction.NO_OP;
+    }
+
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate() {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(connectionFactory());
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        return redisTemplate;
+    }
+
+}
+```
+
 ### ElastiCache For Redis | 장점
 
+#### NoSql Database로서의 장점
+
+- DocumentDB를 이용하는 것과 마찬가지로 스키마의 자유로운 확장과 용량의 수평확장이 가능한 장점이 있다.
+
+#### In-Memory 기반의 높은 I/O 성능
+
+- DocumentDB는 세션을 Disk에 저장하는데 반해 Redis는 메모리에 저장하는 데이터베이스이므로 읽기/쓰기 성능적인 면에서 상당한 이점이 있다.
+
+#### 비용
+
+- RDS나 DocumentDB를 사용하는것보다 다소 저렴하다. ( 단, 프리티어가 없고 클러스터 구성에따라 차이가 있을 수 있음 )
+
+##### 요금 비교 ( 서울 리전 | 온디멘드 | t3.medium )
+
+|     인스턴스 종류     |      크기       | 시간당 요금 |
+| :-------------------: | :-------------: | :---------: |
+|          EC2          |    t3.medium    |  0.052 USD  |
+| Elasticache For Redis | cache.t3.medium |  0.099 USD  |
+|     RDS for MySql     |  db.t3.medium   |  0.104 USD  |
+|      DocumentDB       |  db.t3.medium   |  0.119 USD  |
+
+### 정상적으로 세션이 유지되는 것 확인하기.
+
+![elastic-redis-session](./figures/elastic-redis-session.gif)
+
 ### ElastiCache For Redis | 단점
+
+#### 장애시 복구 불가능
+
+- In-Memory 방식의 데이터베이스이기 때문에 운영 중 장애가 났을경우 모든 세션 데이터는 사라지게 된다.
+
+#### Redis와의 호환성
+
+- 기본적으로 Redis와 동일시 취급받기는 하지만, Configuration 설정에서 오류가 난다는지 하는 기존 Redis와의 자잘한 이슈들은 계속 리포트 되고있다.
+
+#### 비영속성
+
+- 만료일을 지정하게 되면 해당 만료일이 지나면 데이터는 사라지게된다.
+- 별도의 DB구성이 없다면 세션데이터는 영속성을 갖기 않는다.
 
 ## 부록
 
@@ -357,3 +510,5 @@ Ok
 - [Spring Session MongoDB](https://spring.io/projects/spring-session-data-mongodb)
 - [Springboot + Redis 연동하는 예제](https://oingdaddy.tistory.com/310)
 - [How to set password for Redis?](https://stackoverflow.com/questions/7537905/how-to-set-password-for-redis)
+- [Spring Session using Lettuce connecting to AWS ElastiCache Redis](https://stackoverflow.com/questions/62761730/spring-session-using-lettuce-connecting-to-aws-elasticache-redis)
+- [MemoryDB vs Elasticache](https://cloudwellserved.com/amazon-elasticache-for-redis-vs-amazon-memorydb-for-redis/)
