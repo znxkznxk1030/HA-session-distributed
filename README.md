@@ -89,10 +89,7 @@
 
 ## 1. Sticky Session
 
-- **전체 소스는 spring-simple-session 폴더에 있습니다.**
-
-- 로드밸런서의 Sticky Session 옵션을 설정하는 방법은
-- 로드밸런서가 관리하는 대상그룹에서 설정할 수 있다.
+- 로드밸런서의 Sticky Session 옵션을 설정하는 방법은 대상그룹 ( Target Group )에서 설정할 수 있다.
 
 <!-- ### EC2 > 로드 밸런싱 > 대상그룹 -->
 
